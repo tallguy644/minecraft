@@ -24,21 +24,28 @@ The website never touches money or card data — Tebex does.
 
 ## Setup (about 30 minutes)
 
-### 1. Edit the config
-Open `index.html` and change the `CONFIG` and `KITS` blocks near the bottom: server name, IP, Discord link, kit names, prices and contents.
+The site talks to Tebex's **Headless API** right from the browser: it loads your packages live (so prices and kit contents are managed in Tebex, not in code), signs the player in with their Minecraft username, and sends them to Tebex's checkout. Until a token is set, it shows sample kits as a preview.
+
+### 1. Edit the basics
+In `index.html`, near the bottom, set `serverName`, `serverIp` and `discord` in the `CONFIG` block.
 
 ### 2. Create your Tebex store
 1. Sign up at <https://tebex.io> and create a webstore for **Minecraft: Java Edition**.
-2. Set up payouts (PayPal/Stripe) in the Tebex panel.
-3. Put your store address in `CONFIG.tebexStore` (e.g. `https://tekkitreborn.tebex.io`).
+2. Set up payouts in the Tebex creator panel.
+3. Find your store's **Public Token** on the API keys page of the creator panel and paste it into `CONFIG.tebexToken`.
+   Use the **public** token only — never put your private/secret key in this file, because the site is public.
 
-### 3. Install the Tebex plugin on your server
-1. In the Tebex panel go to **Game Servers → Connect** and copy the secret key.
-2. Download the **Tebex Forge** build that matches **1.20.1** and drop the `.jar` into your server's `mods/` folder.
-3. Restart, then run in the server console: `tebex secret <your-key>`
+### 3. Connect your Forge server
+1. In the creator panel, add a game server and copy its **secret key**.
+2. Download the Tebex build for **Forge 1.20.1** (Tebex's official plugin download; if there isn't an official Forge build for your version, the community **Tebex Forged** mod on CurseForge fills the gap). Put the `.jar` in your server's `mods/` folder.
+3. Restart, then run in the server console: `tebex secret <your-secret-key>`
 
-### 4. Make one Tebex package per kit
-For each kit: **Packages → Create**. Set the price, then add commands that run when the player is online. Examples:
+### 4. Make one package per kit
+For each kit: **Packages → Create**. Its category becomes the filter on the site.
+
+- **Description** — write a short sentence, then a bullet list of what's inside. The site shows the sentence as the blurb and the bullets as the item list.
+- **Image** (optional) — shown as the kit's icon.
+- **Commands** — what runs in-game when it's paid for, e.g.:
 
 ```
 give {username} minecraft:iron_pickaxe 1
@@ -51,10 +58,17 @@ tellraw {username} {"text":"Thanks for supporting the server! Your kit has been 
 For modded items, hold the item in-game and press **F3 + H** to show advanced tooltips — the item ID (like `modname:item_name`) appears under the name. Use that in the `give` command.
 
 Settings worth using on each package:
-- **Require player to be online** → on (so items don't vanish).
-- **Purchase limit / expiry** → match the "Limit" shown on the website card.
+- **Require player to be online** → on, so items don't drop into an empty world.
+- **Purchase limit / expiry** → if you want one-time or monthly kits.
 
-Copy each package's numeric ID into the matching kit's `tebexId` in `index.html`. Until a kit has an ID, its Buy button tells the player checkout isn't connected yet.
+### Test before going live
+Make a cheap test package (or use Tebex's test/sandbox options), buy it from the site, and confirm the items appear in-game.
+
+### How checkout works for players
+1. Click **Buy** on a kit, tick the terms box.
+2. Tebex asks for their Minecraft username (once per basket).
+3. They land on Tebex's checkout with the kit in the basket and pay.
+4. Tebex sends them back to the site with a thank-you message, and the Forge plugin delivers the kit when they're online.
 
 ### 5. Publish on GitHub Pages
 Repo **Settings → Pages → Source: Deploy from branch → `main` / root**. Your site appears at `https://<username>.github.io/<repo>/`. You can point a custom domain at it later.

@@ -36,6 +36,7 @@ nav .wrap{display:flex;align-items:center;justify-content:space-between;height:6
 @media(max-width:720px){.links{display:none}}
 
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:0;border-radius:8px;padding:12px 20px;font:600 15px Inter,sans-serif;cursor:pointer;text-decoration:none;transition:transform .12s,box-shadow .2s,background .2s}
+.btn:disabled{opacity:.6;cursor:wait}
 .btn:active{transform:translateY(1px)}
 .btn-primary{background:var(--copper);color:#1a0e04;box-shadow:0 0 0 0 rgba(217,130,59,.5)}
 .btn-primary:hover{background:var(--copper-2);box-shadow:0 0 24px -4px rgba(240,165,96,.6)}
@@ -179,6 +180,7 @@ footer .legal{max-width:60ch;font-size:12.5px;margin-top:8px}
       <p>Kits are delivered straight to your inventory in-game, usually within a minute of checkout. Everything in a kit can also be earned through normal play.</p></div>
       <div class="filters" id="filters" role="group" aria-label="Filter kits"></div>
     </div>
+    <p id="storeNote" hidden style="color:var(--muted);font-size:14px;margin:-16px 0 20px;padding:10px 14px;border:1px dashed var(--line);border-radius:8px"></p>
     <div class="kits" id="kits"></div>
   </div>
 </section>
@@ -187,7 +189,7 @@ footer .legal{max-width:60ch;font-size:12.5px;margin-top:8px}
   <div class="wrap">
     <div class="section-head"><div><span class="kicker pixel">Delivery</span><h2>How buying works</h2></div></div>
     <div class="steps">
-      <div class="step"><h3>Pick a kit</h3><p>Choose a kit and enter your exact Minecraft username.</p></div>
+      <div class="step"><h3>Pick a kit</h3><p>Choose a kit and confirm your Minecraft username with Tebex.</p></div>
       <div class="step"><h3>Secure checkout</h3><p>Pay through our payment partner, Tebex. We never see your card details.</p></div>
       <div class="step"><h3>Log in</h3><p>Be online on the server. If you're offline, delivery waits until you join.</p></div>
       <div class="step"><h3>Check your inventory</h3><p>Items land automatically. Keep a few slots free so nothing drops.</p></div>
@@ -221,9 +223,8 @@ footer .legal{max-width:60ch;font-size:12.5px;margin-top:8px}
 <div class="modal" id="modal" role="dialog" aria-modal="true" aria-labelledby="mTitle">
   <div class="dialog">
     <h3 id="mTitle">Buy kit</h3>
-    <p id="mSub">Enter the username you play with so we can deliver it.</p>
-    <label for="mcName">Minecraft username</label>
-    <input type="text" id="mcName" maxlength="16" autocomplete="off" spellcheck="false" placeholder="Steve">
+    <p id="mSub"></p>
+    <p id="mWho" style="font-size:14px;margin:-8px 0 14px"></p>
     <div class="err" id="mErr"></div>
     <label class="check"><input type="checkbox" id="agree"> I understand items are delivered in-game and purchases are final once delivered.</label>
     <div class="row">
@@ -237,45 +238,49 @@ footer .legal{max-width:60ch;font-size:12.5px;margin-top:8px}
 <script>
 /* =========================================================
    CONFIG — edit this block to make the site yours.
-   See README.md for how each field maps to Tebex.
+   See README.md for where to find each value in Tebex.
    ========================================================= */
 const CONFIG = {
   serverName: "Tekkit Reborn",
   serverIp:   "play.example.com",          // your server address (port optional, e.g. "1.2.3.4:25565")
   discord:    "https://discord.gg/your-invite",
-  currency:   "$",
-  // Your Tebex webstore address, no trailing slash. Leave as-is until you create it.
-  tebexStore: "https://your-store.tebex.io",
+  // Tebex PUBLIC token (safe to publish — it's not your secret/private key).
+  // Leave empty to show the sample kits below as a preview.
+  tebexToken: "",
 };
 
-// Each kit = one Tebex package. Put the package ID from your Tebex panel in `tebexId`.
-// The items listed here are just for display — the real delivery is the commands you set in Tebex.
-const KITS = [
-  { id:"starter",  name:"Starter Kit",   cat:"Starter", icon:"🎒", accent:"#4ade80", price:2.99,
-    desc:"Get past the punch-a-tree phase fast.", tag:null, limit:"One-time",
-    items:["Full iron tools & armor","64 torches, 32 cooked food","Starter set of basic machines","1 extra land claim"], tebexId:null },
-  { id:"engineer", name:"Engineer Kit",  cat:"Tech",    icon:"⚙️", accent:"#d9823b", price:7.99,
-    desc:"Jump-start your first power line and ore processing.", tag:"Popular", limit:"Every 30 days",
-    items:["Basic generators & cabling","Crusher + furnace upgrade line","Stack of copper & tin ingots","Item pipes to automate it"], tebexId:null },
-  { id:"alchemist",name:"Alchemist Kit", cat:"Magic",   icon:"🔮", accent:"#a66bff", price:7.99,
-    desc:"Start down the transmutation path without the setup grind.", tag:null, limit:"Every 30 days",
-    items:["Early transmutation materials","Starter magic tools","Bundle of rare reagents","Guide book"], tebexId:null },
-  { id:"builder",  name:"Builder Kit",   cat:"Utility", icon:"🧱", accent:"#3fd9c9", price:4.99,
-    desc:"Decorative blocks for bases that look as good as they run.", tag:null, limit:"Repeatable",
-    items:["8 stacks of decorative blocks","Glass, lamps & lighting","Building wand","Paint/dye set"], tebexId:null },
-  { id:"industrialist", name:"Industrialist Bundle", cat:"Tech", icon:"🏭", accent:"#f0a560", price:14.99,
-    desc:"Engineer + Builder kits together, with a bonus claim.", tag:"Best value", limit:"Every 30 days",
-    items:["Everything in Engineer Kit","Everything in Builder Kit","2 extra land claims","Exclusive nametag color"], tebexId:null },
-  { id:"supporter",name:"Supporter Cosmetics", cat:"Cosmetic", icon:"💎", accent:"#f472b6", price:3.99,
-    desc:"Show your support — looks only, no gameplay edge.", tag:null, limit:"Permanent",
-    items:["Supporter chat tag","Colored name in tab list","Particle trail","Our thanks for keeping the lights on"], tebexId:null },
+// Sample kits — only shown while tebexToken is empty. Once connected, kits,
+// prices and descriptions come live from your Tebex packages.
+const SAMPLE_KITS = [
+  { id:"starter",  name:"Starter Kit",   cat:"Starter", price:2.99,
+    desc:"Get past the punch-a-tree phase fast.",
+    items:["Full iron tools & armor","64 torches, 32 cooked food","Starter set of basic machines","1 extra land claim"] },
+  { id:"engineer", name:"Engineer Kit",  cat:"Tech",    price:7.99,
+    desc:"Jump-start your first power line and ore processing.",
+    items:["Basic generators & cabling","Crusher + furnace upgrade line","Stack of copper & tin ingots","Item pipes to automate it"] },
+  { id:"alchemist",name:"Alchemist Kit", cat:"Magic",   price:7.99,
+    desc:"Start down the transmutation path without the setup grind.",
+    items:["Early transmutation materials","Starter magic tools","Bundle of rare reagents","Guide book"] },
+  { id:"builder",  name:"Builder Kit",   cat:"Utility", price:4.99,
+    desc:"Decorative blocks for bases that look as good as they run.",
+    items:["8 stacks of decorative blocks","Glass, lamps & lighting","Building wand","Paint/dye set"] },
+  { id:"supporter",name:"Supporter Cosmetics", cat:"Cosmetic", price:3.99,
+    desc:"Show your support — looks only, no gameplay edge.",
+    items:["Supporter chat tag","Colored name in tab list","Particle trail"] },
 ];
 /* ========================= END CONFIG ========================= */
 
 const $ = s => document.querySelector(s);
-const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const store = {
+  get(k){ try { return localStorage.getItem(k); } catch { return null; } },
+  set(k,v){ try { localStorage.setItem(k,v); } catch {} },
+  del(k){ try { localStorage.removeItem(k); } catch {} },
+};
+const LIVE = !!CONFIG.tebexToken.trim();
+const SITE = location.origin + location.pathname;
 
-// Apply config
+// ---------- Page basics ----------
 document.title = CONFIG.serverName + " — Tekkit The Resurrection 2";
 $("#brandName").textContent = CONFIG.serverName;
 document.querySelectorAll(".brandName2").forEach(e => e.textContent = CONFIG.serverName);
@@ -283,80 +288,197 @@ $("#serverIp").textContent = CONFIG.serverIp;
 $("#discordLink").href = CONFIG.discord;
 $("#year").textContent = new Date().getFullYear();
 
-function toast(msg){ const t=$("#toast"); t.textContent=msg; t.classList.add("show"); clearTimeout(t._h); t._h=setTimeout(()=>t.classList.remove("show"),2400); }
+function toast(msg, ms=2600){ const t=$("#toast"); t.textContent=msg; t.classList.add("show"); clearTimeout(t._h); t._h=setTimeout(()=>t.classList.remove("show"),ms); }
 
 $("#copyIp").onclick = async () => {
   try { await navigator.clipboard.writeText(CONFIG.serverIp); toast("IP copied — see you in-game"); }
   catch { toast(CONFIG.serverIp); }
 };
 
-// Live server status (free public API)
 (async () => {
   const dot=$("#statusDot"), txt=$("#statusText");
   if (CONFIG.serverIp.includes("example.com")) { txt.textContent="Set your server IP in the config to show live status"; return; }
   try {
-    const r = await fetch("https://api.mcsrvstat.us/3/" + encodeURIComponent(CONFIG.serverIp));
-    const d = await r.json();
+    const d = await (await fetch("https://api.mcsrvstat.us/3/" + encodeURIComponent(CONFIG.serverIp))).json();
     if (d.online) { dot.className="dot on"; txt.textContent=`Online · ${d.players?.online ?? 0}/${d.players?.max ?? "?"} players`; }
     else { dot.className="dot off"; txt.textContent="Offline right now — check Discord for updates"; }
   } catch { txt.textContent="Status unavailable"; }
 })();
 
-// Store rendering
-const cats = ["All", ...new Set(KITS.map(k => k.cat))];
+// ---------- Tebex Headless API ----------
+const API  = "https://headless.tebex.io/api";
+const ACCT = () => `${API}/accounts/${encodeURIComponent(CONFIG.tebexToken.trim())}`;
+
+async function tebex(method, url, body){
+  const r = await fetch(url, {
+    method,
+    headers: body ? { "Content-Type":"application/json" } : {},
+    body: body ? JSON.stringify(body) : undefined,
+  });
+  let j = null; try { j = await r.json(); } catch {}
+  if (!r.ok) throw new Error(j?.detail || j?.message || j?.title || `Tebex error ${r.status}`);
+  return j && "data" in j ? j.data : j;
+}
+const getBasket   = id => tebex("GET",  `${ACCT()}/baskets/${encodeURIComponent(id)}`);
+const newBasket   = () => tebex("POST", `${ACCT()}/baskets`, {
+  complete_url: SITE + "?purchase=complete",
+  cancel_url:   SITE + "?purchase=cancelled",
+  complete_auto_redirect: true,
+});
+const addToBasket = (id, pkg) => tebex("POST", `${API}/baskets/${encodeURIComponent(id)}/packages`, { package_id: String(pkg), quantity: 1 });
+const authLinks   = (id, ret) => tebex("GET", `${ACCT()}/baskets/${encodeURIComponent(id)}/auth?returnUrl=${encodeURIComponent(ret)}`);
+
+// Returns a usable (unpaid) basket, creating one if needed.
+async function currentBasket(){
+  const saved = store.get("tebexBasket");
+  if (saved) {
+    try { const b = await getBasket(saved); if (b && !b.complete) return b; } catch {}
+    store.del("tebexBasket");
+  }
+  const b = await newBasket();
+  store.set("tebexBasket", b.ident);
+  return b;
+}
+
+async function addAndCheckout(basketIdent, pkgId){
+  try { await addToBasket(basketIdent, pkgId); }
+  catch (e) {
+    // Already in the basket? Carry on to checkout; otherwise surface the error.
+    const b = await getBasket(basketIdent);
+    if (!(b.packages || []).some(p => String(p.id) === String(pkgId))) throw e;
+  }
+  const b = await getBasket(basketIdent);
+  if (!b.links?.checkout) throw new Error("Tebex didn't return a checkout link.");
+  location.href = b.links.checkout;
+}
+
+// ---------- Kits: load + render ----------
+let KITS = [];
+const ICONS = [["start","🎒"],["tech","⚙️"],["industr","🏭"],["magic","🔮"],["alch","🔮"],["build","🧱"],["util","🧰"],["cosmet","💎"],["rank","👑"],["support","💎"]];
+const ACCENTS = ["#d9823b","#a66bff","#3fd9c9","#4ade80","#f0a560","#f472b6"];
+const iconFor = s => (ICONS.find(([k]) => s.toLowerCase().includes(k)) || [,"📦"])[1];
+
+// Tebex descriptions are HTML; we read them as plain text only (bullets from <li>, the rest as a paragraph).
+function parseDesc(html){
+  const doc = new DOMParser().parseFromString(html || "", "text/html");
+  const items = [...doc.querySelectorAll("li")].map(li => li.textContent.trim()).filter(Boolean);
+  doc.querySelectorAll("ul,ol").forEach(n => n.remove());
+  return { desc: doc.body.textContent.replace(/\s+/g," ").trim(), items };
+}
+const money = (n, cur="USD") => { try { return new Intl.NumberFormat(undefined,{style:"currency",currency:cur}).format(n); } catch { return `$${Number(n).toFixed(2)}`; } };
+
+async function loadKits(){
+  if (!LIVE) {
+    KITS = SAMPLE_KITS.map(k => ({ ...k, currency:"USD" }));
+    $("#storeNote").innerHTML = "<strong>Preview:</strong> sample kits shown. Add your Tebex public token in the config to go live.";
+    $("#storeNote").hidden = false;
+    return;
+  }
+  $("#kits").innerHTML = `<p style="color:var(--muted)">Loading kits…</p>`;
+  const cats = await tebex("GET", `${ACCT()}/categories?includePackages=1`);
+  KITS = [];
+  (cats || []).forEach(c => (c.packages || []).forEach(p => {
+    const { desc, items } = parseDesc(p.description);
+    KITS.push({ id:String(p.id), name:p.name, cat:c.name, price:Number(p.total_price ?? p.base_price ?? 0),
+                currency:p.currency || "USD", image:p.image || null, desc, items });
+  }));
+  if (!KITS.length) $("#kits").innerHTML = `<p style="color:var(--muted)">No kits are on sale right now. Check back soon.</p>`;
+}
+
 let activeCat = "All";
 function renderFilters(){
-  $("#filters").innerHTML = cats.map(c => `<button class="chip" aria-pressed="${c===activeCat}" data-c="${esc(c)}">${esc(c)}</button>`).join("");
+  const cats = ["All", ...new Set(KITS.map(k => k.cat))];
+  $("#filters").innerHTML = cats.length > 2 ? cats.map(c => `<button class="chip" aria-pressed="${c===activeCat}" data-c="${esc(c)}">${esc(c)}</button>`).join("") : "";
   $("#filters").querySelectorAll(".chip").forEach(b => b.onclick = () => { activeCat=b.dataset.c; renderFilters(); renderKits(); });
 }
 function renderKits(){
   const list = KITS.filter(k => activeCat==="All" || k.cat===activeCat);
-  $("#kits").innerHTML = list.map(k => `
-    <article class="kit" style="--accent:${esc(k.accent)}">
-      ${k.tag ? `<span class="tag pixel">${esc(k.tag)}</span>` : ""}
-      <div class="kit-ico">${k.icon}</div>
+  if (!list.length) return;
+  $("#kits").innerHTML = list.map((k,i) => `
+    <article class="kit" style="--accent:${ACCENTS[KITS.indexOf(k) % ACCENTS.length]}">
+      <div class="kit-ico">${k.image ? `<img src="${esc(k.image)}" alt="" style="width:36px;height:36px;object-fit:contain;image-rendering:pixelated">` : iconFor(k.cat + " " + k.name)}</div>
       <h3>${esc(k.name)}</h3>
-      <p class="desc">${esc(k.desc)}</p>
-      <ul>${k.items.map(i => `<li>${esc(i)}</li>`).join("")}</ul>
-      <div class="meta">Limit: ${esc(k.limit)}</div>
+      ${k.desc ? `<p class="desc">${esc(k.desc)}</p>` : ""}
+      ${k.items.length ? `<ul>${k.items.map(x => `<li>${esc(x)}</li>`).join("")}</ul>` : ""}
       <div class="foot">
-        <div class="price">${esc(CONFIG.currency)}${k.price.toFixed(2)} <small>USD</small></div>
+        <div class="price">${esc(money(k.price, k.currency))}</div>
         <button class="btn btn-primary btn-sm" data-buy="${esc(k.id)}">Buy</button>
       </div>
     </article>`).join("");
   $("#kits").querySelectorAll("[data-buy]").forEach(b => b.onclick = () => openBuy(b.dataset.buy));
 }
 
-// Purchase flow
+// ---------- Purchase flow ----------
 let pending = null;
-function openBuy(id){
+async function openBuy(id){
   pending = KITS.find(k => k.id===id);
   $("#mTitle").textContent = `Buy ${pending.name}`;
-  $("#mSub").textContent = `${CONFIG.currency}${pending.price.toFixed(2)} · delivered in-game to the username below.`;
-  try { $("#mcName").value = localStorage.getItem("mcName") || ""; } catch {}
-  $("#agree").checked = false; $("#mErr").textContent = "";
-  $("#modal").classList.add("open"); setTimeout(()=>$("#mcName").focus(),50);
+  $("#mSub").textContent = `${money(pending.price, pending.currency)} · delivered to your inventory in-game.`;
+  $("#mWho").textContent = ""; $("#agree").checked = false; $("#mErr").textContent = "";
+  $("#mGo").disabled = false; $("#mGo").textContent = "Continue to checkout";
+  $("#modal").classList.add("open");
+  // Show who the basket is signed in as, if anyone.
+  const saved = LIVE && store.get("tebexBasket");
+  if (saved) {
+    try {
+      const b = await getBasket(saved);
+      if (b?.username && !b.complete) $("#mWho").innerHTML = `Delivering to <strong>${esc(b.username)}</strong> · <a href="#" id="switchUser">not you?</a>`;
+      const sw = $("#switchUser"); if (sw) sw.onclick = e => { e.preventDefault(); store.del("tebexBasket"); $("#mWho").textContent = "You'll sign in with your Minecraft username next."; };
+    } catch {}
+  } else if (LIVE) {
+    $("#mWho").textContent = "Next you'll confirm your Minecraft username with Tebex.";
+  }
 }
 function closeBuy(){ $("#modal").classList.remove("open"); pending=null; }
 $("#mCancel").onclick = closeBuy;
 $("#modal").onclick = e => { if (e.target.id==="modal") closeBuy(); };
 document.addEventListener("keydown", e => { if (e.key==="Escape") closeBuy(); });
 
-$("#mGo").onclick = () => {
-  const name = $("#mcName").value.trim();
-  if (!/^[A-Za-z0-9_]{3,16}$/.test(name)) { $("#mErr").textContent="Usernames are 3–16 letters, numbers or underscores."; return; }
-  if (!$("#agree").checked) { $("#mErr").textContent="Please tick the box to continue."; return; }
-  try { localStorage.setItem("mcName", name); } catch {}
-  if (!pending.tebexId || CONFIG.tebexStore.includes("your-store")) {
-    $("#mErr").textContent="Checkout isn't connected yet — the store owner still needs to add the Tebex package ID.";
-    return;
+$("#mGo").onclick = async () => {
+  if (!$("#agree").checked) { $("#mErr").textContent = "Please tick the box to continue."; return; }
+  if (!LIVE) { $("#mErr").textContent = "This is a preview — the store isn't connected to Tebex yet."; return; }
+  $("#mErr").textContent = ""; $("#mGo").disabled = true; $("#mGo").textContent = "Connecting to Tebex…";
+  try {
+    const b = await currentBasket();
+    if (b.username) return await addAndCheckout(b.ident, pending.id);
+    // Not signed in yet: remember the kit, send the player to Tebex's username sign-in, resume on return.
+    store.set("tebexPending", pending.id);
+    const links = await authLinks(b.ident, SITE + "?resume=1");
+    const url = Array.isArray(links) ? links[0]?.url : links?.url;
+    if (!url) throw new Error("Tebex didn't return a sign-in link.");
+    location.href = url;
+  } catch (e) {
+    $("#mErr").textContent = e.message || "Something went wrong. Please try again.";
+    $("#mGo").disabled = false; $("#mGo").textContent = "Continue to checkout";
   }
-  // Tebex adds the package to the basket; the player confirms their username on Tebex's checkout.
-  window.location.href = `${CONFIG.tebexStore}/checkout/packages/add/${encodeURIComponent(pending.tebexId)}/single`;
 };
-$("#mcName").addEventListener("keydown", e => { if (e.key==="Enter") $("#mGo").click(); });
 
-renderFilters(); renderKits();
+// Handle returns from Tebex (sign-in, completed or cancelled checkout)
+async function handleReturn(){
+  const q = new URLSearchParams(location.search);
+  if (![...q.keys()].length) return;
+  history.replaceState(null, "", SITE + location.hash);
+  if (q.get("purchase") === "complete") {
+    store.del("tebexBasket"); store.del("tebexPending");
+    toast("Thanks! Your kit will arrive in-game shortly — make sure you're online.", 6000);
+  } else if (q.get("purchase") === "cancelled") {
+    toast("Checkout cancelled — nothing was charged.");
+  } else if (q.get("resume") && LIVE) {
+    const pkg = store.get("tebexPending"), basket = store.get("tebexBasket");
+    store.del("tebexPending");
+    if (!pkg || !basket) return;
+    toast("Signed in — taking you to checkout…", 8000);
+    try { await addAndCheckout(basket, pkg); }
+    catch (e) { toast(e.message || "Couldn't finish checkout. Please try again.", 6000); }
+  }
+}
+
+(async () => {
+  try { await loadKits(); renderFilters(); renderKits(); }
+  catch (e) { $("#kits").innerHTML = `<p style="color:var(--bad)">Couldn't load the store from Tebex (${esc(e.message)}). Please try again later.</p>`; }
+  handleReturn();
+})();
 </script>
+
 </body>
 </html>
