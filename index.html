@@ -1,0 +1,362 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tekkit Reborn Server</title>
+<meta name="description" content="A Tekkit The Resurrection 2 Minecraft server — tech, magic and automation. Grab a kit and jump in.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=Inter:wght@400;500;600&family=Silkscreen&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0d0f12; --bg2:#14171c; --panel:#1a1e24; --line:#2a3039;
+  --text:#e7e9ec; --muted:#9aa3ae;
+  --copper:#d9823b; --copper-2:#f0a560;
+  --emc:#a66bff; --volt:#3fd9c9; --ok:#4ade80; --bad:#f87171;
+  --radius:10px;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--text);font:16px/1.6 Inter,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+a{color:var(--copper-2)}
+h1,h2,h3{font-family:"Chakra Petch",sans-serif;line-height:1.15;margin:0}
+.wrap{max-width:1140px;margin:0 auto;padding:0 20px}
+.pixel{font-family:Silkscreen,monospace;letter-spacing:.04em}
+
+/* nav */
+nav{position:sticky;top:0;z-index:20;background:rgba(13,15,18,.85);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+nav .wrap{display:flex;align-items:center;justify-content:space-between;height:62px;gap:16px}
+.brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--text);font-family:"Chakra Petch";font-weight:700;font-size:20px}
+.brand-mark{width:30px;height:30px;border-radius:6px;background:conic-gradient(from 45deg,var(--copper),var(--emc),var(--volt),var(--copper));display:grid;place-items:center}
+.brand-mark::after{content:"";width:12px;height:12px;background:var(--bg);border-radius:2px;transform:rotate(45deg)}
+.links{display:flex;gap:22px}
+.links a{color:var(--muted);text-decoration:none;font-weight:500;font-size:15px}
+.links a:hover{color:var(--text)}
+@media(max-width:720px){.links{display:none}}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:0;border-radius:8px;padding:12px 20px;font:600 15px Inter,sans-serif;cursor:pointer;text-decoration:none;transition:transform .12s,box-shadow .2s,background .2s}
+.btn:active{transform:translateY(1px)}
+.btn-primary{background:var(--copper);color:#1a0e04;box-shadow:0 0 0 0 rgba(217,130,59,.5)}
+.btn-primary:hover{background:var(--copper-2);box-shadow:0 0 24px -4px rgba(240,165,96,.6)}
+.btn-ghost{background:transparent;color:var(--text);border:1px solid var(--line)}
+.btn-ghost:hover{border-color:var(--copper)}
+.btn-sm{padding:8px 14px;font-size:14px}
+
+/* hero */
+.hero{position:relative;overflow:hidden;padding:96px 0 80px;border-bottom:1px solid var(--line)}
+.hero::before{content:"";position:absolute;inset:0;background:
+  radial-gradient(600px 300px at 80% 20%,rgba(166,107,255,.18),transparent 70%),
+  radial-gradient(500px 300px at 10% 90%,rgba(217,130,59,.16),transparent 70%);
+  pointer-events:none}
+.hero::after{content:"";position:absolute;inset:0;background-image:linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px);background-size:48px 48px;opacity:.25;mask-image:linear-gradient(to bottom,#000,transparent 85%);pointer-events:none}
+.hero .wrap{position:relative;z-index:1}
+.eyebrow{display:inline-block;color:var(--volt);font-size:13px;margin-bottom:18px;padding:4px 10px;border:1px solid rgba(63,217,201,.35);border-radius:999px;background:rgba(63,217,201,.06)}
+.hero h1{font-size:clamp(40px,7vw,76px);font-weight:700;max-width:14ch}
+.hero h1 em{font-style:normal;background:linear-gradient(90deg,var(--copper-2),var(--emc));-webkit-background-clip:text;background-clip:text;color:transparent}
+.hero p.lead{color:var(--muted);font-size:clamp(17px,2vw,20px);max-width:56ch;margin:20px 0 32px}
+.ipbox{display:flex;flex-wrap:wrap;align-items:center;gap:12px}
+.ip{display:flex;align-items:center;gap:12px;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:10px 10px 10px 16px}
+.ip code{font:600 16px "Chakra Petch",monospace;color:var(--text)}
+.status{display:flex;align-items:center;gap:8px;color:var(--muted);font-size:14px;margin-top:20px}
+.dot{width:9px;height:9px;border-radius:50%;background:var(--muted)}
+.dot.on{background:var(--ok);box-shadow:0 0 10px var(--ok)}
+.dot.off{background:var(--bad)}
+
+/* sections */
+section{padding:80px 0}
+.section-head{display:flex;flex-wrap:wrap;align-items:end;justify-content:space-between;gap:16px;margin-bottom:36px}
+.section-head h2{font-size:clamp(28px,4vw,42px)}
+.section-head p{color:var(--muted);margin:8px 0 0;max-width:60ch}
+.kicker{color:var(--copper);font-size:12px;display:block;margin-bottom:10px}
+
+/* features */
+.features{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px}
+.feature{background:var(--bg2);border:1px solid var(--line);border-radius:var(--radius);padding:24px}
+.feature .ico{width:40px;height:40px;border-radius:8px;display:grid;place-items:center;margin-bottom:14px;font-size:20px}
+.feature h3{font-size:19px;margin-bottom:6px}
+.feature p{color:var(--muted);margin:0;font-size:15px}
+
+/* store */
+#store{background:var(--bg2);border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.filters{display:flex;flex-wrap:wrap;gap:8px}
+.chip{background:transparent;border:1px solid var(--line);color:var(--muted);padding:7px 14px;border-radius:999px;font:500 14px Inter;cursor:pointer}
+.chip[aria-pressed="true"]{border-color:var(--copper);color:var(--text);background:rgba(217,130,59,.1)}
+.kits{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:18px}
+.kit{position:relative;display:flex;flex-direction:column;background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:22px;transition:border-color .2s,transform .2s}
+.kit:hover{border-color:var(--accent,var(--copper));transform:translateY(-3px)}
+.kit .tag{position:absolute;top:16px;right:16px;font-size:11px;padding:3px 8px;border-radius:4px;background:var(--accent,var(--copper));color:#111}
+.kit-ico{width:52px;height:52px;border-radius:10px;display:grid;place-items:center;font-size:26px;margin-bottom:16px;background:color-mix(in srgb,var(--accent,var(--copper)) 16%,transparent);border:1px solid color-mix(in srgb,var(--accent,var(--copper)) 45%,transparent)}
+.kit h3{font-size:22px}
+.kit .desc{color:var(--muted);font-size:14.5px;margin:6px 0 14px}
+.kit ul{list-style:none;padding:0;margin:0 0 18px;display:grid;gap:6px;font-size:14.5px}
+.kit li{display:flex;gap:8px}
+.kit li::before{content:"▸";color:var(--accent,var(--copper))}
+.kit .meta{color:var(--muted);font-size:13px;margin-bottom:16px}
+.kit .foot{margin-top:auto;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.price{font:700 26px "Chakra Petch"}
+.price small{font-size:14px;color:var(--muted);font-weight:500}
+
+/* steps */
+.steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;counter-reset:s}
+.step{border-left:2px solid var(--copper);padding:4px 0 4px 18px}
+.step::before{counter-increment:s;content:"0" counter(s);font:700 13px Silkscreen;color:var(--copper);display:block;margin-bottom:8px}
+.step h3{font-size:18px;margin-bottom:4px}
+.step p{color:var(--muted);margin:0;font-size:15px}
+
+/* faq */
+details{background:var(--bg2);border:1px solid var(--line);border-radius:var(--radius);padding:16px 20px;margin-bottom:10px}
+summary{cursor:pointer;font-weight:600;list-style:none;display:flex;justify-content:space-between;gap:12px}
+summary::after{content:"+";color:var(--copper);font-size:20px;line-height:1}
+details[open] summary::after{content:"–"}
+details p{color:var(--muted);margin:10px 0 0}
+
+/* modal */
+.modal{position:fixed;inset:0;z-index:50;display:none;place-items:center;background:rgba(0,0,0,.65);padding:16px}
+.modal.open{display:grid}
+.dialog{width:100%;max-width:440px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:26px}
+.dialog h3{font-size:22px;margin-bottom:4px}
+.dialog p{color:var(--muted);margin:0 0 18px;font-size:15px}
+label{display:block;font-size:14px;font-weight:600;margin-bottom:6px}
+input[type=text]{width:100%;background:var(--bg);border:1px solid var(--line);color:var(--text);border-radius:8px;padding:12px 14px;font:16px Inter}
+input[type=text]:focus{outline:none;border-color:var(--copper)}
+.err{color:var(--bad);font-size:13px;min-height:18px;margin:6px 0 12px}
+.dialog .row{display:flex;gap:10px;justify-content:flex-end}
+.check{display:flex;gap:10px;align-items:flex-start;font-size:13.5px;color:var(--muted);font-weight:400;margin-bottom:14px}
+
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(100px);background:var(--panel);border:1px solid var(--copper);padding:10px 18px;border-radius:8px;transition:transform .25s;z-index:60}
+.toast.show{transform:translateX(-50%) translateY(0)}
+
+footer{padding:40px 0;color:var(--muted);font-size:14px}
+footer .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:16px}
+footer .legal{max-width:60ch;font-size:12.5px;margin-top:8px}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="wrap">
+    <a class="brand" href="#top"><span class="brand-mark"></span><span id="brandName">Tekkit Reborn</span></a>
+    <div class="links">
+      <a href="#about">About</a><a href="#store">Kits</a><a href="#how">How it works</a><a href="#faq">FAQ</a>
+    </div>
+    <a class="btn btn-primary btn-sm" href="#store">Shop kits</a>
+  </div>
+</nav>
+
+<header class="hero" id="top">
+  <div class="wrap">
+    <span class="eyebrow pixel">Tekkit The Resurrection 2 · Forge 1.20.1</span>
+    <h1>Build the machine. <em>Bend the world.</em></h1>
+    <p class="lead">200+ tech and magic mods, one persistent world. Power grids, transmutation, factories that run while you sleep — and a community building alongside you.</p>
+    <div class="ipbox">
+      <div class="ip"><code id="serverIp">play.example.com</code><button class="btn btn-ghost btn-sm" id="copyIp">Copy IP</button></div>
+      <a class="btn btn-primary" href="#store">Browse kits</a>
+    </div>
+    <div class="status"><span class="dot" id="statusDot"></span><span id="statusText">Checking server status…</span></div>
+  </div>
+</header>
+
+<section id="about">
+  <div class="wrap">
+    <div class="section-head">
+      <div><span class="kicker pixel">The server</span><h2>Classic Tekkit, rebuilt</h2>
+      <p>Install <strong>Tekkit The Resurrection 2</strong> from the CurseForge app (or your launcher of choice), add the IP above, and you're in.</p></div>
+    </div>
+    <div class="features">
+      <div class="feature"><div class="ico" style="background:rgba(217,130,59,.15)">⚙️</div><h3>Industrial tech</h3><p>Power networks, ore processing and sprawling automated factories.</p></div>
+      <div class="feature"><div class="ico" style="background:rgba(166,107,255,.15)">✨</div><h3>Magic & transmutation</h3><p>Turn resources into progress with magical systems that pair with the tech tree.</p></div>
+      <div class="feature"><div class="ico" style="background:rgba(63,217,201,.15)">🛡️</div><h3>Protected claims</h3><p>Claim your land so your base stays yours. Griefing isn't tolerated.</p></div>
+      <div class="feature"><div class="ico" style="background:rgba(74,222,128,.15)">🌍</div><h3>Persistent world</h3><p>Pre-generated, backed up daily, and no surprise wipes.</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="store">
+  <div class="wrap">
+    <div class="section-head">
+      <div><span class="kicker pixel">Kit store</span><h2>Skip the early grind</h2>
+      <p>Kits are delivered straight to your inventory in-game, usually within a minute of checkout. Everything in a kit can also be earned through normal play.</p></div>
+      <div class="filters" id="filters" role="group" aria-label="Filter kits"></div>
+    </div>
+    <div class="kits" id="kits"></div>
+  </div>
+</section>
+
+<section id="how">
+  <div class="wrap">
+    <div class="section-head"><div><span class="kicker pixel">Delivery</span><h2>How buying works</h2></div></div>
+    <div class="steps">
+      <div class="step"><h3>Pick a kit</h3><p>Choose a kit and enter your exact Minecraft username.</p></div>
+      <div class="step"><h3>Secure checkout</h3><p>Pay through our payment partner, Tebex. We never see your card details.</p></div>
+      <div class="step"><h3>Log in</h3><p>Be online on the server. If you're offline, delivery waits until you join.</p></div>
+      <div class="step"><h3>Check your inventory</h3><p>Items land automatically. Keep a few slots free so nothing drops.</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="faq" style="padding-top:0">
+  <div class="wrap" style="max-width:820px">
+    <div class="section-head"><div><span class="kicker pixel">Questions</span><h2>FAQ</h2></div></div>
+    <details><summary>I paid but didn't get my kit.</summary><p>Make sure you're online and spelled your username exactly (it's case-sensitive). Deliveries can take a few minutes. Still nothing after 15 minutes? Contact us with your Tebex transaction ID.</p></details>
+    <details><summary>My inventory was full.</summary><p>Overflow items may drop at your feet. Clear space before logging in after a purchase.</p></details>
+    <details><summary>Can I buy a kit more than once?</summary><p>Some kits are one-time, others can be bought again. Each card shows its limit.</p></details>
+    <details><summary>Refunds?</summary><p>Because items are delivered instantly, purchases are generally final. If something went wrong with delivery, we'll make it right. See the store terms on checkout.</p></details>
+    <details><summary>Is this server affiliated with Mojang?</summary><p>No. This is an independent community server.</p></details>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div>
+      <div>© <span id="year"></span> <span class="brandName2">Tekkit Reborn</span></div>
+      <div class="legal">Not an official Minecraft product. Not approved by or associated with Mojang or Microsoft. Payments are processed by Tebex.</div>
+    </div>
+    <div style="display:flex;gap:18px;align-items:flex-start">
+      <a href="#" id="discordLink">Discord</a><a href="#faq">Support</a>
+    </div>
+  </div>
+</footer>
+
+<div class="modal" id="modal" role="dialog" aria-modal="true" aria-labelledby="mTitle">
+  <div class="dialog">
+    <h3 id="mTitle">Buy kit</h3>
+    <p id="mSub">Enter the username you play with so we can deliver it.</p>
+    <label for="mcName">Minecraft username</label>
+    <input type="text" id="mcName" maxlength="16" autocomplete="off" spellcheck="false" placeholder="Steve">
+    <div class="err" id="mErr"></div>
+    <label class="check"><input type="checkbox" id="agree"> I understand items are delivered in-game and purchases are final once delivered.</label>
+    <div class="row">
+      <button class="btn btn-ghost" id="mCancel">Cancel</button>
+      <button class="btn btn-primary" id="mGo">Continue to checkout</button>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+/* =========================================================
+   CONFIG — edit this block to make the site yours.
+   See README.md for how each field maps to Tebex.
+   ========================================================= */
+const CONFIG = {
+  serverName: "Tekkit Reborn",
+  serverIp:   "play.example.com",          // your server address (port optional, e.g. "1.2.3.4:25565")
+  discord:    "https://discord.gg/your-invite",
+  currency:   "$",
+  // Your Tebex webstore address, no trailing slash. Leave as-is until you create it.
+  tebexStore: "https://your-store.tebex.io",
+};
+
+// Each kit = one Tebex package. Put the package ID from your Tebex panel in `tebexId`.
+// The items listed here are just for display — the real delivery is the commands you set in Tebex.
+const KITS = [
+  { id:"starter",  name:"Starter Kit",   cat:"Starter", icon:"🎒", accent:"#4ade80", price:2.99,
+    desc:"Get past the punch-a-tree phase fast.", tag:null, limit:"One-time",
+    items:["Full iron tools & armor","64 torches, 32 cooked food","Starter set of basic machines","1 extra land claim"], tebexId:null },
+  { id:"engineer", name:"Engineer Kit",  cat:"Tech",    icon:"⚙️", accent:"#d9823b", price:7.99,
+    desc:"Jump-start your first power line and ore processing.", tag:"Popular", limit:"Every 30 days",
+    items:["Basic generators & cabling","Crusher + furnace upgrade line","Stack of copper & tin ingots","Item pipes to automate it"], tebexId:null },
+  { id:"alchemist",name:"Alchemist Kit", cat:"Magic",   icon:"🔮", accent:"#a66bff", price:7.99,
+    desc:"Start down the transmutation path without the setup grind.", tag:null, limit:"Every 30 days",
+    items:["Early transmutation materials","Starter magic tools","Bundle of rare reagents","Guide book"], tebexId:null },
+  { id:"builder",  name:"Builder Kit",   cat:"Utility", icon:"🧱", accent:"#3fd9c9", price:4.99,
+    desc:"Decorative blocks for bases that look as good as they run.", tag:null, limit:"Repeatable",
+    items:["8 stacks of decorative blocks","Glass, lamps & lighting","Building wand","Paint/dye set"], tebexId:null },
+  { id:"industrialist", name:"Industrialist Bundle", cat:"Tech", icon:"🏭", accent:"#f0a560", price:14.99,
+    desc:"Engineer + Builder kits together, with a bonus claim.", tag:"Best value", limit:"Every 30 days",
+    items:["Everything in Engineer Kit","Everything in Builder Kit","2 extra land claims","Exclusive nametag color"], tebexId:null },
+  { id:"supporter",name:"Supporter Cosmetics", cat:"Cosmetic", icon:"💎", accent:"#f472b6", price:3.99,
+    desc:"Show your support — looks only, no gameplay edge.", tag:null, limit:"Permanent",
+    items:["Supporter chat tag","Colored name in tab list","Particle trail","Our thanks for keeping the lights on"], tebexId:null },
+];
+/* ========================= END CONFIG ========================= */
+
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+// Apply config
+document.title = CONFIG.serverName + " — Tekkit The Resurrection 2";
+$("#brandName").textContent = CONFIG.serverName;
+document.querySelectorAll(".brandName2").forEach(e => e.textContent = CONFIG.serverName);
+$("#serverIp").textContent = CONFIG.serverIp;
+$("#discordLink").href = CONFIG.discord;
+$("#year").textContent = new Date().getFullYear();
+
+function toast(msg){ const t=$("#toast"); t.textContent=msg; t.classList.add("show"); clearTimeout(t._h); t._h=setTimeout(()=>t.classList.remove("show"),2400); }
+
+$("#copyIp").onclick = async () => {
+  try { await navigator.clipboard.writeText(CONFIG.serverIp); toast("IP copied — see you in-game"); }
+  catch { toast(CONFIG.serverIp); }
+};
+
+// Live server status (free public API)
+(async () => {
+  const dot=$("#statusDot"), txt=$("#statusText");
+  if (CONFIG.serverIp.includes("example.com")) { txt.textContent="Set your server IP in the config to show live status"; return; }
+  try {
+    const r = await fetch("https://api.mcsrvstat.us/3/" + encodeURIComponent(CONFIG.serverIp));
+    const d = await r.json();
+    if (d.online) { dot.className="dot on"; txt.textContent=`Online · ${d.players?.online ?? 0}/${d.players?.max ?? "?"} players`; }
+    else { dot.className="dot off"; txt.textContent="Offline right now — check Discord for updates"; }
+  } catch { txt.textContent="Status unavailable"; }
+})();
+
+// Store rendering
+const cats = ["All", ...new Set(KITS.map(k => k.cat))];
+let activeCat = "All";
+function renderFilters(){
+  $("#filters").innerHTML = cats.map(c => `<button class="chip" aria-pressed="${c===activeCat}" data-c="${esc(c)}">${esc(c)}</button>`).join("");
+  $("#filters").querySelectorAll(".chip").forEach(b => b.onclick = () => { activeCat=b.dataset.c; renderFilters(); renderKits(); });
+}
+function renderKits(){
+  const list = KITS.filter(k => activeCat==="All" || k.cat===activeCat);
+  $("#kits").innerHTML = list.map(k => `
+    <article class="kit" style="--accent:${esc(k.accent)}">
+      ${k.tag ? `<span class="tag pixel">${esc(k.tag)}</span>` : ""}
+      <div class="kit-ico">${k.icon}</div>
+      <h3>${esc(k.name)}</h3>
+      <p class="desc">${esc(k.desc)}</p>
+      <ul>${k.items.map(i => `<li>${esc(i)}</li>`).join("")}</ul>
+      <div class="meta">Limit: ${esc(k.limit)}</div>
+      <div class="foot">
+        <div class="price">${esc(CONFIG.currency)}${k.price.toFixed(2)} <small>USD</small></div>
+        <button class="btn btn-primary btn-sm" data-buy="${esc(k.id)}">Buy</button>
+      </div>
+    </article>`).join("");
+  $("#kits").querySelectorAll("[data-buy]").forEach(b => b.onclick = () => openBuy(b.dataset.buy));
+}
+
+// Purchase flow
+let pending = null;
+function openBuy(id){
+  pending = KITS.find(k => k.id===id);
+  $("#mTitle").textContent = `Buy ${pending.name}`;
+  $("#mSub").textContent = `${CONFIG.currency}${pending.price.toFixed(2)} · delivered in-game to the username below.`;
+  try { $("#mcName").value = localStorage.getItem("mcName") || ""; } catch {}
+  $("#agree").checked = false; $("#mErr").textContent = "";
+  $("#modal").classList.add("open"); setTimeout(()=>$("#mcName").focus(),50);
+}
+function closeBuy(){ $("#modal").classList.remove("open"); pending=null; }
+$("#mCancel").onclick = closeBuy;
+$("#modal").onclick = e => { if (e.target.id==="modal") closeBuy(); };
+document.addEventListener("keydown", e => { if (e.key==="Escape") closeBuy(); });
+
+$("#mGo").onclick = () => {
+  const name = $("#mcName").value.trim();
+  if (!/^[A-Za-z0-9_]{3,16}$/.test(name)) { $("#mErr").textContent="Usernames are 3–16 letters, numbers or underscores."; return; }
+  if (!$("#agree").checked) { $("#mErr").textContent="Please tick the box to continue."; return; }
+  try { localStorage.setItem("mcName", name); } catch {}
+  if (!pending.tebexId || CONFIG.tebexStore.includes("your-store")) {
+    $("#mErr").textContent="Checkout isn't connected yet — the store owner still needs to add the Tebex package ID.";
+    return;
+  }
+  // Tebex adds the package to the basket; the player confirms their username on Tebex's checkout.
+  window.location.href = `${CONFIG.tebexStore}/checkout/packages/add/${encodeURIComponent(pending.tebexId)}/single`;
+};
+$("#mcName").addEventListener("keydown", e => { if (e.key==="Enter") $("#mGo").click(); });
+
+renderFilters(); renderKits();
+</script>
+</body>
+</html>
